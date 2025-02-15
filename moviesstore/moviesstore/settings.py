@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'home',
     'movies',
     'accounts',
+    'cart',
 ]
 
 MIDDLEWARE = [
@@ -84,7 +85,7 @@ DATABASES = {
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',
-        'PORT': '3307',
+        'PORT': '3308',
     }
 }
 

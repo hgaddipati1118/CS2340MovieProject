@@ -1,20 +1,24 @@
-import requests
 import os
-from django.core.files import File
-from django.core.files.temp import NamedTemporaryFile
+import sys
+import django
+import requests
+from django.core.files.base import ContentFile
+from dotenv import load_dotenv
 
-# TMDb API Configuration
-API_KEY = "61759505be57e7942838e2db9f22286b"
+load_dotenv()
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(BASE_DIR)
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "moviesstore.settings")
+django.setup()
+
+from movies.models import Movie
+
+API_KEY = os.getenv("API-KEY")
 API_URL = "https://api.themoviedb.org/3/discover/movie"
 IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500"
 
-FOLDER_NAME = "movie_posters"
-os.makedirs(FOLDER_NAME, exist_ok=True)
-
 def rating_to_price(vote_average):
-    """
-    Converts a TMDb movie rating (0-10 scale) into a price estimate.
-    """
     if vote_average >= 8.0:
         return 19.99
     elif vote_average >= 6.0:
@@ -26,35 +30,52 @@ def rating_to_price(vote_average):
     else:
         return 2.99
 
-# Fetch movies
-params = {
-    "api_key": API_KEY,
-    "language": "en-US",
-    "sort_by": "popularity.desc",
-    "page": 1
-}
-response = requests.get(API_URL, params=params)
-movies = response.json().get("results", [])[:15]  # Get first 5 movies
+for page in range(1, 4):
+    print(f"Fetching movies from page {page}...")
+    
+    params = {
+        "api_key": API_KEY,
+        "language": "en-US",  # Ensure this is set for English
+        "sort_by": "popularity.desc",  # Keep the sorting for popularity
+        "page": page,
+        "include_adult": "false",  # Ensure adult content is excluded
+        "region": "US",  # Restrict to US-based content
+    }
 
-# Process movies
-for movie in movies:
-    title = movie["title"]
-    description = movie["overview"]
-    poster_path = movie.get("poster_path")
-    rating = movie.get("vote_average", 0)  # Default to 0 if missing
-    price = rating_to_price(rating)
+    response = requests.get(API_URL, params=params)
+    
+    if response.status_code != 200:
+        print(f"Failed to fetch page {page}. Skipping...")
+        continue
+    
+    movies = response.json().get("results", [])
 
-    print(f"{title}\n{price:.2f}\n{description}\n\n")
+    for movie in movies:
+        name = movie["title"]
+        description = movie["overview"]
+        poster_path = movie.get("poster_path")
+        rating = movie.get("vote_average", 0)
+        price = rating_to_price(rating)
 
-    # Download and save poster if available
-    if poster_path:
-        image_url = f"{IMAGE_BASE_URL}{poster_path}"
-        image_data = requests.get(image_url).content
-        file_path = os.path.join(FOLDER_NAME, f"{title.replace(' ', '_')}.jpg")
+        if Movie.objects.filter(name=name).exists():
+            print(f"Movie '{name}' already exists. Skipping.")
+            continue
 
-        with open(file_path, "wb") as f:
-            f.write(image_data)
+        image_file = None
+        if poster_path:
+            image_url = f"{IMAGE_BASE_URL}{poster_path}"
+            image_response = requests.get(image_url)
+            
+            if image_response.status_code == 200:
+                image_filename = f"{name.replace(' ', '_')}.jpg"
+                image_file = ContentFile(image_response.content, name=image_filename)
 
-        print(f"Saved poster: {file_path}")
+        movie_entry = Movie(name=name, price=price, description=description)
+        
+        if image_file:
+            movie_entry.image.save(image_filename, image_file, save=True)
 
-print("Download complete!")
+        movie_entry.save()
+        print(f"Added to database: {name}")
+
+print("Database update complete!")

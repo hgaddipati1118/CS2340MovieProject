@@ -2,14 +2,15 @@
     background: url("/static/img/background.jpg") no-repeat
     fixed;
     background-size: 100% auto;
+    color: #303030;
 }
 
 .navbar a.nav-link {
-    color: #FFFEF6 !important;
+    color: #ffa31a !important;
 }
 
 .bg-dark {
-    background-color: #2E2E2E !important;
+    background-color: #202020 !important;
 }
 
 .ms-footer {
@@ -17,12 +18,12 @@
 }
 
 .ms-footer p {
-    color: #7F7F7F;
+    color: #ffa31a;
     font-size: 13px;
 }
 
 .ms-footer a:hover {
-    color: #6ab43e;
+    color: #ffa31a;
     text-decoration: none;
 }
 
@@ -32,12 +33,12 @@
 }
 
 .ms-footer-bottom a {
-    color: #6ab43e;
+    color: #ffa31a;
     text-decoration: none;
 }
 
 .ms-footer-bottom a:hover {
-    color: #fff;
+    color: #303030;
 }
 
 .img-card-200 {

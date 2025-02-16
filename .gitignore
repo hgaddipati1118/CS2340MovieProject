@@ -1,1 +1,7 @@
 moviesstore/.env
+moviesstore/accounts/__pycache__/
+moviesstore/accounts/migrations/__pycache__/
+moviesstore/cart/__pycache__/
+moviesstore/movies/__pycache__/
+moviesstore/cart/migrations/__pycache__/
+moviesstore/movies/migrations/__pycache__/
